@@ -455,14 +455,14 @@ export function TypingGame({ onGameFinish }: TypingGameProps) {
                 transition: 'left 0.15s ease-out, top 0.15s ease-out',
               }}
             >
-              {/* Player name label above cursor */}
+              {/* Player name label above flag */}
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1">
                 <div className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded whitespace-nowrap">
                   {topEntry.playerName || "Anonymous"}
                 </div>
               </div>
-              {/* Purple cursor line */}
-              <div className="w-[3px] h-8 bg-purple-500" />
+              {/* Flag icon instead of purple line */}
+              <Flag className="w-5 h-5 text-purple-500" fill="currentColor" />
             </div>
           )}
         </div>
