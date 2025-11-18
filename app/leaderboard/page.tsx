@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import { gameResults, user } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 
+// Disable caching to always fetch fresh leaderboard data
+export const revalidate = 0;
+
 async function getTopPlayers() {
   try {
     const results = await db
