@@ -36,6 +36,13 @@
       "when": 1761444967804,
       "tag": "0004_slimy_vance_astro",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1763431327030,
+      "tag": "0005_parallel_santa_claus",
+      "breakpoints": true
     }
   ]
 }

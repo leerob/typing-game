@@ -7,8 +7,9 @@ import { nanoid } from "nanoid";
 import { toast } from "sonner";
 import { shareGameResult } from "@/app/actions/share";
 import { useKeyboardSounds } from "@/lib/use-keyboard-sounds";
-import { Volume2, VolumeX, Medal, Flag } from "lucide-react";
+import { Volume2, VolumeX, Medal, Flag, Clock } from "lucide-react";
 import Link from "next/link";
+import { getTimerPreference, setTimerPreference } from "@/app/actions/timer-preference";
 
 interface GameState {
   text: string;
@@ -56,7 +57,10 @@ export function TypingGame({ onGameFinish }: TypingGameProps) {
   const [raceModeEnabled, setRaceModeEnabled] = useState(false);
   const [topEntry, setTopEntry] = useState<{ wpm: number; playerName: string | null } | null>(null);
   const [ghostCursorPosition, setGhostCursorPosition] = useState<{ left: number | string; top: number }>({ left: "-2", top: 2 });
-  
+
+  // Timer preference
+  const [timerPreference, setTimerPreferenceState] = useState<15 | 30>(30);
+
   // Keyboard sounds
   const { playPressSound, playReleaseSound, enabled: soundEnabled, toggleSound } = useKeyboardSounds({ initialEnabled: true, volume: 0.9 });
 
@@ -75,6 +79,18 @@ export function TypingGame({ onGameFinish }: TypingGameProps) {
     }));
     // Ensure input is focused on mount
     inputRef.current?.focus();
+  }, []);
+
+  // Load timer preference from database
+  useEffect(() => {
+    getTimerPreference().then((duration) => {
+      setTimerPreferenceState(duration as 15 | 30);
+      // Update timer to match preference if game hasn't started yet
+      setState((prev) => ({
+        ...prev,
+        timer: duration,
+      }));
+    });
   }, []);
 
   // Fetch top leaderboard entry when race mode is enabled
@@ -340,7 +356,7 @@ export function TypingGame({ onGameFinish }: TypingGameProps) {
       text: getRandomExcerpt(),
       userInput: "",
       startTime: null,
-      timer: 30,
+      timer: timerPreference, // Use the user's timer preference
       isGameActive: false,
       isGameFinished: false,
       finalWPM: 0,
@@ -366,11 +382,33 @@ export function TypingGame({ onGameFinish }: TypingGameProps) {
         shortId: id,
         wpm: state.finalWPM,
         accuracy: state.finalAccuracy,
-        duration: 30 - state.timer,
+        duration: timerPreference - state.timer, // Use timer preference for accurate duration
         wpmHistory: wpmHistory.length > 0 ? wpmHistory : undefined,
       });
     } catch {
       toast.error("Failed to save results");
+    }
+  };
+
+  const handleTimerToggle = async () => {
+    const newDuration = timerPreference === 30 ? 15 : 30;
+    setTimerPreferenceState(newDuration);
+
+    // Update timer if game hasn't started yet
+    if (!state.isGameActive) {
+      setState((prev) => ({
+        ...prev,
+        timer: newDuration,
+      }));
+    }
+
+    // Save preference to database (only for logged-in users)
+    try {
+      await setTimerPreference(newDuration);
+      toast.success(`Timer set to ${newDuration} seconds`);
+    } catch (error) {
+      // If user is not logged in, just update locally
+      toast.info(`Timer set to ${newDuration} seconds (sign in to save preference)`);
     }
   };
 
@@ -492,7 +530,7 @@ export function TypingGame({ onGameFinish }: TypingGameProps) {
             Share
           </button>
         ) : (
-          <span className="text-muted-foreground tabular-nums">{state.timer || 30}</span>
+          <span className="text-muted-foreground tabular-nums">{state.timer || timerPreference}</span>
         )}
         <span className="text-muted-foreground tabular-nums w-36 text-right">
           {state.isGameFinished ? state.finalWPM : currentWPM} WPM
@@ -509,11 +547,27 @@ export function TypingGame({ onGameFinish }: TypingGameProps) {
       {/* Leaderboard button - bottom right */}
       <Link
         href="/leaderboard"
-        className="fixed bottom-4 right-20 w-8 h-8 flex items-center justify-center text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+        className="fixed bottom-4 right-28 w-8 h-8 flex items-center justify-center text-muted-foreground/60 hover:text-muted-foreground transition-colors"
         aria-label="View leaderboard"
       >
         <Medal className="w-5 h-5" strokeWidth={1.5} />
       </Link>
+
+      {/* Timer toggle button - bottom right */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleTimerToggle();
+          setTimeout(() => inputRef.current?.focus(), 0);
+        }}
+        className="fixed bottom-4 right-20 w-8 h-8 flex items-center justify-center text-muted-foreground/60 hover:text-muted-foreground transition-colors relative group"
+        aria-label={`Switch to ${timerPreference === 30 ? 15 : 30} second timer`}
+      >
+        <Clock className="w-5 h-5" strokeWidth={1.5} />
+        <span className="absolute -top-1 -right-1 text-[10px] font-bold bg-background px-0.5 rounded">
+          {timerPreference}
+        </span>
+      </button>
 
       {/* Race flag button - bottom right */}
       <button
@@ -523,8 +577,8 @@ export function TypingGame({ onGameFinish }: TypingGameProps) {
           setTimeout(() => inputRef.current?.focus(), 0);
         }}
         className={`fixed bottom-4 right-12 w-8 h-8 flex items-center justify-center transition-colors ${
-          raceModeEnabled 
-            ? 'text-purple-500 hover:text-purple-600' 
+          raceModeEnabled
+            ? 'text-purple-500 hover:text-purple-600'
             : 'text-muted-foreground/60 hover:text-muted-foreground'
         }`}
         aria-label={raceModeEnabled ? "Disable race mode" : "Enable race mode"}
