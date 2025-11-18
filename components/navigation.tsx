@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-client";
+import { Github } from "lucide-react";
 
 export function Navigation() {
   const { data: sessionData, isPending } = useSession();
@@ -17,6 +18,15 @@ export function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 p-4 flex justify-end items-center z-50">
       <div className={`flex items-center gap-4 transition-opacity ${isPending ? 'opacity-0' : 'opacity-100'}`}>
+        <a
+          href="https://github.com/aravhawk/typing-game"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:opacity-80 transition-opacity"
+          aria-label="View source on GitHub"
+        >
+          <Github className="w-6 h-6" />
+        </a>
         {sessionData?.user ? (
           <a
             href="/profile"
