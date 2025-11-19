@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { authClient, signOut } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-client";
-import { Github, LogOut } from "lucide-react";
+import { Github, LogIn, LogOut } from "lucide-react";
 
 export function Navigation() {
   const { data: sessionData, isPending } = useSession();
@@ -61,9 +61,10 @@ export function Navigation() {
         ) : (
           <button
             onClick={handleSignIn}
-            className="text-base px-4 py-1 border border-border rounded-full hover:bg-secondary/50 transition-colors"
+            className="flex items-center gap-2 text-base px-4 py-1 border border-border rounded-full hover:bg-secondary/50 transition-colors"
             aria-label="Sign in with Google"
           >
+            <LogIn className="w-4 h-4" />
             Sign in
           </button>
         )}
